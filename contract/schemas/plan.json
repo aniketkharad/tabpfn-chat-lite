@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tabpfn-chat-lite.internal/schemas/plan.json",
+  "title": "Plan",
+  "description": "Validated execution plan compiled by the Planner. Deterministic executor executes only plans conforming to this schema.",
+  "type": "object",
+  "required": ["plan_id", "capability", "target", "features", "params", "estimate"],
+  "additionalProperties": false,
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "Unique identifier for the planned analysis job.",
+      "pattern": "^plan_[a-zA-Z0-9_-]+$"
+    },
+    "capability": {
+      "type": "string",
+      "description": "TabPFN capability to execute.",
+      "enum": [
+        "classification",
+        "regression",
+        "forecasting",
+        "anomaly_detection",
+        "data_generation",
+        "interpretability"
+      ]
+    },
+    "target": {
+      "type": ["string", "null"],
+      "description": "Name of the target column. Null for unsupervised capabilities."
+    },
+    "features": {
+      "type": "array",
+      "description": "List of feature columns to include in the model.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "params": {
+      "type": "object",
+      "description": "Execution parameters tailored to the capability.",
+      "additionalProperties": true,
+      "properties": {
+        "split_strategy": {
+          "type": "string",
+          "enum": ["random", "stratified", "chronological", "group"]
+        },
+        "split_column": {
+          "type": ["string", "null"]
+        },
+        "holdout_fraction": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 0.5
+        },
+        "random_seed": {
+          "type": "integer"
+        },
+        "eval_metric": {
+          "type": "string"
+        },
+        "confidence_intervals": {
+          "type": "boolean"
+        },
+        "forecast_horizon": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "n_samples": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "n_permutations": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "estimate": {
+      "type": "object",
+      "description": "Pre-execution resource and quota cost projection.",
+      "required": ["gemini_calls", "tabpfn_tokens", "pct_of_daily_budget"],
+      "additionalProperties": false,
+      "properties": {
+        "gemini_calls": {
+          "type": "integer",
+          "description": "Projected Gemini calls (Planner + Narrator).",
+          "minimum": 0
+        },
+        "tabpfn_tokens": {
+          "type": "integer",
+          "description": "Projected TabPFN token charge (floor 10,000 per predict call).",
+          "minimum": 0
+        },
+        "pct_of_daily_budget": {
+          "type": "number",
+          "description": "Percentage of remaining daily token budget required for this run.",
+          "minimum": 0.0,
+          "maximum": 100.0
+        }
+      }
+    }
+  }
+}

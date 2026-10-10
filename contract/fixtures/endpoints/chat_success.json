@@ -1,0 +1,22 @@
+{
+  "type": "plan",
+  "message": "I've structured a plan to predict customer churn based on account age and tenure using TabPFN classification.",
+  "plan": {
+    "plan_id": "plan_churn_classification_v1",
+    "capability": "classification",
+    "target": "churn",
+    "features": ["age", "tenure"],
+    "params": {
+      "split_strategy": "stratified",
+      "holdout_fraction": 0.2,
+      "random_seed": 42,
+      "eval_metric": "roc_auc",
+      "confidence_intervals": true
+    },
+    "estimate": {
+      "gemini_calls": 2,
+      "tabpfn_tokens": 10000,
+      "pct_of_daily_budget": 0.2
+    }
+  }
+}

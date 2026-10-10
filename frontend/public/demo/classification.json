@@ -1,0 +1,215 @@
+{
+  "run_id": "run_demo_classification",
+  "capability": "classification",
+  "description": "Customer churn binary classification with calibration curve and predictions.",
+  "plan": {
+    "plan_id": "plan_demo_classification",
+    "capability": "classification",
+    "target": "churn",
+    "features": [
+      "age",
+      "tenure",
+      "balance"
+    ],
+    "params": {
+      "split_strategy": "random",
+      "holdout_fraction": 0.2,
+      "random_seed": 42,
+      "eval_metric": "accuracy",
+      "confidence_intervals": true
+    },
+    "estimate": {
+      "gemini_calls": 2,
+      "tabpfn_tokens": 10000,
+      "pct_of_daily_budget": 0.2
+    }
+  },
+  "events": [
+    {
+      "event": "queued",
+      "elapsed_ms": 0,
+      "data": {
+        "position": 1,
+        "eta_s": 0.5
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 150,
+      "data": {
+        "stage": "planning",
+        "message": "Planning classification"
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 320,
+      "data": {
+        "stage": "fitting",
+        "message": "Executing deterministic TabPFN analysis"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 520,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 560,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 600,
+      "data": {
+        "type": "chart"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 640,
+      "data": {
+        "type": "table"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 680,
+      "data": {
+        "type": "download"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 720,
+      "data": {
+        "type": "text"
+      }
+    },
+    {
+      "event": "done",
+      "elapsed_ms": 770,
+      "data": {
+        "summary": "Classification demo completed.",
+        "run_id": "run_demo_classification"
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Accuracy",
+      "value": 0.857,
+      "baseline_value": 0.714,
+      "delta": 0.143,
+      "unit": "ratio",
+      "description": "Classification accuracy on holdout test set vs naive majority baseline.",
+      "uncertainty": {
+        "lower": 0.777,
+        "upper": 0.937,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "metric",
+      "name": "ROC-AUC",
+      "value": 0.885,
+      "baseline_value": 0.5,
+      "delta": 0.385,
+      "unit": "auc",
+      "description": "Holdout ROC-AUC vs naive random ranking baseline.",
+      "uncertainty": {
+        "lower": 0.825,
+        "upper": 0.935,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "chart",
+      "kind": "reliability",
+      "title": "Calibration Reliability Curve",
+      "description": "Empirical accuracy plotted across predicted probability deciles.",
+      "data": {
+        "bins": [
+          0.1,
+          0.3,
+          0.5,
+          0.7,
+          0.9
+        ],
+        "observed_frequencies": [
+          0.08,
+          0.29,
+          0.52,
+          0.68,
+          0.91
+        ],
+        "sample_counts": [
+          6,
+          7,
+          5,
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Holdout Predictions",
+      "description": "Sample holdout predictions with class probabilities.",
+      "table": {
+        "cols": [
+          "row_index",
+          "actual_class",
+          "predicted_class",
+          "probability"
+        ],
+        "types": [
+          "int",
+          "string",
+          "string",
+          "float"
+        ],
+        "rows": [
+          [
+            1,
+            "no",
+            "no",
+            0.92
+          ],
+          [
+            2,
+            "yes",
+            "yes",
+            0.84
+          ],
+          [
+            3,
+            "no",
+            "no",
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "type": "download",
+      "filename": "classification_predictions.csv",
+      "format": "csv",
+      "description": "Predictions with class probabilities for holdout instances.",
+      "size_bytes": 92,
+      "content": "row_index,actual_class,predicted_class,probability\n1,no,no,0.92\n2,yes,yes,0.84\n3,no,no,0.95\n"
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN classification achieved 0.857 Accuracy on holdout evaluation, outperforming the naive 0.714 baseline by +0.143. Calibration reliability curves and holdout predictions have been computed deterministically."
+    }
+  ],
+  "summary": "TabPFN classification achieved 0.857 Accuracy on holdout evaluation, outperforming the naive 0.714 baseline by +0.143. Calibration reliability curves and holdout predictions have been computed deterministically."
+}

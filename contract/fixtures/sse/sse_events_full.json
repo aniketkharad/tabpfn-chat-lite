@@ -1,0 +1,89 @@
+[
+  {
+    "id": "1",
+    "event": "queued",
+    "data": {
+      "position": 1,
+      "eta_s": 1.5
+    }
+  },
+  {
+    "id": "2",
+    "event": "status",
+    "data": {
+      "stage": "planning",
+      "message": "Compiling validated JobSpec"
+    }
+  },
+  {
+    "id": "3",
+    "event": "status",
+    "data": {
+      "stage": "estimating",
+      "message": "Estimating TabPFN token cost"
+    }
+  },
+  {
+    "id": "4",
+    "event": "status",
+    "data": {
+      "stage": "fitting",
+      "message": "Executing deterministic TabPFN REST prediction"
+    }
+  },
+  {
+    "id": "5",
+    "event": "status",
+    "data": {
+      "stage": "narrating",
+      "message": "Synthesizing grounded performance narration"
+    }
+  },
+  {
+    "id": "6",
+    "event": "block",
+    "data": {
+      "block": {
+        "type": "metric",
+        "name": "ROC-AUC",
+        "value": 0.885,
+        "baseline_value": 0.5,
+        "delta": 0.385,
+        "unit": "auc",
+        "description": "Holdout ROC-AUC vs naive majority-class baseline."
+      }
+    }
+  },
+  {
+    "id": "7",
+    "event": "block",
+    "data": {
+      "block": {
+        "type": "text",
+        "title": "Grounded Narration",
+        "content": "TabPFN-3.5 attained an ROC-AUC of 0.885 on 28 holdout instances, outperforming the majority baseline by +0.385."
+      }
+    }
+  },
+  {
+    "id": "8",
+    "event": "done",
+    "data": {
+      "summary": "Classification analysis completed in 1.48s.",
+      "run_id": "run_01_classification",
+      "completed_at": "2026-10-09T22:00:10.000Z"
+    }
+  },
+  {
+    "id": "9",
+    "event": "error",
+    "data": {
+      "error": {
+        "code": "quota_tabpfn",
+        "message": "Daily TabPFN token budget exhausted (5,000,000 tokens reached). Resets at 00:00:00 UTC.",
+        "retry_after_s": 7200,
+        "request_id": "req_qtp_01j7q34k89z8"
+      }
+    }
+  }
+]

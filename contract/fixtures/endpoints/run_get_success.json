@@ -1,0 +1,26 @@
+{
+  "run_id": "run_01j7q34k89z2m_exec",
+  "plan_id": "plan_churn_classification_v1",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "ROC-AUC",
+      "value": 0.885,
+      "baseline_value": 0.5,
+      "delta": 0.385,
+      "description": "Area under the ROC curve on holdout test set vs naive majority baseline.",
+      "uncertainty": {
+        "lower": 0.84,
+        "upper": 0.93,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "text",
+      "title": "Analysis Summary",
+      "content": "TabPFN achieved an ROC-AUC of 0.885, strongly outperforming the naive majority baseline of 0.500."
+    }
+  ],
+  "summary": "TabPFN classifier fit completed on 140 rows. Model achieved 0.885 ROC-AUC."
+}

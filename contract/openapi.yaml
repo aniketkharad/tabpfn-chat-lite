@@ -1,0 +1,532 @@
+openapi: 3.1.0
+info:
+  title: tabpfn-chat-lite API
+  version: 0.1.0
+  description: >
+    API contract for tabpfn-chat-lite: a lightweight, secure tabular analysis web application
+    powered by TabPFN-3.5 deterministic execution and Gemini structured planning.
+    Divided into gateway-owned public routes, proxied backend routes, and internal signed synchronization routes.
+
+servers:
+  - url: /
+    description: Current origin (Edge Gateway)
+  - url: https://api.tabpfn-chat.internal
+    description: Internal Backend Host
+
+security:
+  - SessionCookie: []
+
+paths:
+  # =========================================================================
+  # Gateway-Owned Routes
+  # =========================================================================
+  /api/session:
+    post:
+      summary: Initialize Session
+      description: Exchanges a Cloudflare Turnstile token for a signed HttpOnly session cookie.
+      operationId: createSession
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [turnstile_token]
+              properties:
+                turnstile_token:
+                  type: string
+                  description: Cloudflare Turnstile anti-bot token.
+      responses:
+        '200':
+          description: Session created successfully. Sets tabchat_session HttpOnly cookie.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: tabchat_session=eyJhbGciOi...; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=86400
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session_id, expires_at]
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/ErrorResponse'
+
+    delete:
+      summary: Delete Session ("Delete My Data")
+      description: Destroys user session and immediately flushes any ephemeral memory records. Clears session cookie.
+      operationId: deleteSession
+      responses:
+        '200':
+          description: Session and associated data successfully purged.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: tabchat_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, message]
+                properties:
+                  status:
+                    type: string
+                    example: deleted
+                  message:
+                    type: string
+                    example: Session and ephemeral data deleted
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/status:
+    get:
+      summary: Get Service Status & Capacity Limits
+      description: Returns service operational status, remaining daily capacity quotas, reset time, and hard data limits.
+      operationId: getStatus
+      security: []
+      responses:
+        '200':
+          description: Current system status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [state, resets_at, limits]
+                properties:
+                  state:
+                    type: string
+                    enum: [ok, busy, exhausted, killed]
+                  resets_at:
+                    type: string
+                    format: date-time
+                  limits:
+                    type: object
+                    required: [max_rows, max_cols, max_cells, max_file_size_bytes, max_turns]
+                    properties:
+                      max_rows:
+                        type: integer
+                        example: 200
+                      max_cols:
+                        type: integer
+                        example: 50
+                      max_cells:
+                        type: integer
+                        example: 10000
+                      max_file_size_bytes:
+                        type: integer
+                        example: 1048576
+                      max_turns:
+                        type: integer
+                        example: 15
+                  capacity:
+                    type: object
+                    properties:
+                      active_runs:
+                        type: integer
+                      daily_runs_remaining:
+                        type: integer
+
+  # =========================================================================
+  # Proxied Routes (Edge Gateway -> Backend Host with HMAC)
+  # =========================================================================
+  /health:
+    get:
+      summary: Service Health Check
+      description: Lightweight readiness probe for backend compute. Exempt from HMAC signature checks.
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Backend is healthy and ready to serve requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version, timestamp]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: 0.1.0
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/upload:
+    post:
+      summary: Upload Tabular Dataset
+      description: Uploads a CSV file (raw or gzip-compressed). The backend parses and sanitizes content authoritatively.
+      operationId: uploadDataset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file (optional gzip compression).
+          text/csv:
+            schema:
+              type: string
+              description: Raw CSV text stream.
+      responses:
+        '200':
+          description: CSV parsed and dataset card constructed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dataset_id, dataset_card, table]
+                properties:
+                  dataset_id:
+                    type: string
+                  dataset_card:
+                    type: object
+                    required: [row_count, col_count, columns, preview_rows]
+                    properties:
+                      row_count:
+                        type: integer
+                      col_count:
+                        type: integer
+                      columns:
+                        type: array
+                        items:
+                          type: object
+                          required: [name, type, null_count, sample_values]
+                          properties:
+                            name: { type: string }
+                            type: { type: string }
+                            null_count: { type: integer }
+                            sample_values:
+                              type: array
+                              items: { type: [string, number, boolean, "null"] }
+                      preview_rows:
+                        type: array
+                        items:
+                          type: array
+                  table:
+                    $ref: './schemas/table.json'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/chat:
+    post:
+      summary: Conversational Intent & Planning Turn
+      description: Clarifies analysis objectives or requests Gemini to formulate a structured Plan.
+      operationId: chatTurn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  maxLength: 500
+                history:
+                  type: array
+                  items:
+                    type: object
+                    required: [role, content]
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: Response from conversational agent (either clarification or proposed plan).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [type, message]
+                properties:
+                  type:
+                    type: string
+                    enum: [clarification, plan]
+                  message:
+                    type: string
+                  plan:
+                    oneOf:
+                      - $ref: './schemas/plan.json'
+                      - type: "null"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/run:
+    post:
+      summary: Confirm and Execute Plan
+      description: Submits a previously validated plan_id for asynchronous execution. Deterministic code only.
+      operationId: executeRun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan_id]
+              properties:
+                plan_id:
+                  type: string
+                  pattern: ^plan_[a-zA-Z0-9_-]+$
+      responses:
+        '202':
+          description: Plan accepted and run queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [run_id, status, estimate]
+                properties:
+                  run_id:
+                    type: string
+                    pattern: ^run_[a-zA-Z0-9_-]+$
+                  status:
+                    type: string
+                    example: queued
+                  estimate:
+                    type: object
+                    required: [gemini_calls, tabpfn_tokens, pct_of_daily_budget]
+                    properties:
+                      gemini_calls:
+                        type: integer
+                      tabpfn_tokens:
+                        type: integer
+                      pct_of_daily_budget:
+                        type: number
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/runs/{id}/events:
+    get:
+      summary: Stream Run Events (SSE)
+      description: Real-time Server-Sent Events stream for an active or queued run. Supports reconnection via Last-Event-ID header.
+      operationId: streamRunEvents
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema:
+            type: string
+            description: Event sequence ID from which to resume playback.
+      responses:
+        '200':
+          description: Active event stream emitting queued, status, block, done, and error events.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Text event stream formatted per SSE specification.
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/runs/{id}:
+    get:
+      summary: Retrieve Run Details
+      description: Returns completed run artifacts, metrics, and generated blocks.
+      operationId: getRun
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Completed or current state of analysis run.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [run_id, plan_id, status, blocks]
+                properties:
+                  run_id:
+                    type: string
+                  plan_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, running, completed, failed]
+                  blocks:
+                    type: array
+                    items:
+                      $ref: './schemas/result_block.json'
+                  summary:
+                    type: string
+                  error:
+                    type: object
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/log:
+    get:
+      summary: Get Session Audit Trail
+      description: Returns ordered event history with cryptographic hash chain for offline verification and replay.
+      operationId: getAuditLog
+      responses:
+        '200':
+          description: Complete session event log.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session_id, events]
+                properties:
+                  session_id:
+                    type: string
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      required: [seq, prev_hash, hash, event_type, timestamp, data]
+                      properties:
+                        seq:
+                          type: integer
+                        prev_hash:
+                          type: string
+                        hash:
+                          type: string
+                        event_type:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        data:
+                          type: object
+
+  # =========================================================================
+  # Internal Routes (Backend -> Gateway with HMAC Auth)
+  # =========================================================================
+  /internal/log:
+    post:
+      summary: Ingest Backend Log Events
+      description: Internal endpoint where backend flushes immutable sequence and hash chains to gateway sink.
+      operationId: ingestInternalLog
+      security:
+        - GatewayHMAC: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id, events]
+              properties:
+                session_id:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Log events accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, count]
+                properties:
+                  accepted:
+                    type: boolean
+                  count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /internal/counters:
+    post:
+      summary: Update Quota & Token Counters
+      description: Internal endpoint where backend updates Edge Gateway tracking of Gemini calls and TabPFN tokens used.
+      operationId: updateInternalCounters
+      security:
+        - GatewayHMAC: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tabpfn_tokens, gemini_calls]
+              properties:
+                tabpfn_tokens:
+                  type: integer
+                gemini_calls:
+                  type: integer
+      responses:
+        '200':
+          description: Counters updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, current_usage]
+                properties:
+                  accepted:
+                    type: boolean
+                  current_usage:
+                    type: object
+                    required: [tabpfn_tokens_today, gemini_calls_today]
+                    properties:
+                      tabpfn_tokens_today:
+                        type: integer
+                      gemini_calls_today:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+
+# ===========================================================================
+# Components & Security
+# ===========================================================================
+components:
+  securitySchemes:
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: tabchat_session
+      description: Signed HMAC session cookie issued by Cloudflare Worker edge.
+    GatewayHMAC:
+      type: apiKey
+      in: header
+      name: X-Gateway-Signature
+      description: Gateway-to-backend HMAC-SHA256 signature calculated over canonical string per contract/auth.md.
+
+  responses:
+    ErrorResponse:
+      description: Standardized error envelope returned on failure.
+      content:
+        application/json:
+          schema:
+            $ref: './schemas/error.json'

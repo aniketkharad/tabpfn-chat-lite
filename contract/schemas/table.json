@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tabpfn-chat-lite.internal/schemas/table.json",
+  "title": "Table",
+  "description": "Columnar table representation with explicit column names, inferred data types, and rows as arrays of values without repeated keys. Null values are strictly null.",
+  "type": "object",
+  "required": ["cols", "types", "rows"],
+  "additionalProperties": false,
+  "properties": {
+    "cols": {
+      "type": "array",
+      "description": "Ordered list of column names. Column names must be unique strings.",
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      },
+      "uniqueItems": true
+    },
+    "types": {
+      "type": "array",
+      "description": "Inferred data type for each column matching cols index.",
+      "items": {
+        "type": "string",
+        "enum": ["string", "int", "float", "boolean", "datetime"]
+      }
+    },
+    "rows": {
+      "type": "array",
+      "description": "Rows represented as arrays of primitive cell values. Nulls are represented strictly as null.",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": ["string", "number", "boolean", "null"]
+        }
+      }
+    }
+  }
+}

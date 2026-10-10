@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "unsupported",
+    "message": "Requested capability 'deep_learning_cv' is not supported by TabPFN-3.5.",
+    "request_id": "req_uns_01j7q34k89z3"
+  }
+}

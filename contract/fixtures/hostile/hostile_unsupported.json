@@ -1,0 +1,16 @@
+{
+  "scenario": "Requesting unsupported deep learning image classification capability",
+  "input": {
+    "plan_id": "plan_hostile_unsupported_01",
+    "capability": "image_diffusion_model",
+    "target": "pixels",
+    "features": ["red", "green", "blue"]
+  },
+  "expected_error": {
+    "error": {
+      "code": "unsupported",
+      "message": "Capability 'image_diffusion_model' is not supported. TabPFN-3.5 supports tabular models only.",
+      "request_id": "req_hostile_uns_01"
+    }
+  }
+}

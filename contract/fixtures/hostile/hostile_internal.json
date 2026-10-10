@@ -1,0 +1,14 @@
+{
+  "scenario": "Corrupted non-UTF8 binary stream in internal route payload triggering unhandled parser failure",
+  "input": {
+    "endpoint": "POST /internal/log",
+    "payload_corruption": "invalid_binary_stream"
+  },
+  "expected_error": {
+    "error": {
+      "code": "internal",
+      "message": "Internal parser error during log ingestion.",
+      "request_id": "req_hostile_int_01"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "session_id": "018f2a9e-64d8-7b9c-8511-9a7b938f01aa",
+  "events": [
+    {
+      "seq": 0,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hash": "4a1d9bc78e6f12ab34cd56ef781290ab34cd56ef781290ab34cd56ef781290ab",
+      "event_type": "session_created",
+      "timestamp": "2026-10-09T22:00:00.000Z",
+      "data": {
+        "user_agent": "Mozilla/5.0",
+        "ip_salt_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "seq": 1,
+      "prev_hash": "4a1d9bc78e6f12ab34cd56ef781290ab34cd56ef781290ab34cd56ef781290ab",
+      "hash": "8b2e0cd89f7a23bc45de67fa892301bc45de67fa892301bc45de67fa892301bc",
+      "event_type": "upload_completed",
+      "timestamp": "2026-10-09T22:00:05.000Z",
+      "data": {
+        "dataset_id": "ds_8a7c1f20bc34",
+        "row_count": 140,
+        "col_count": 8
+      }
+    }
+  ]
+}

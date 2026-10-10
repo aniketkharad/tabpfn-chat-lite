@@ -1,0 +1,84 @@
+{
+  "run_id": "run_02_regression",
+  "plan_id": "plan_housing_regression_v1",
+  "capability": "regression",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "RMSE",
+      "value": 4.12,
+      "baseline_value": 9.45,
+      "delta": -5.33,
+      "unit": "k$",
+      "description": "Root Mean Squared Error on holdout test set vs mean baseline.",
+      "uncertainty": {
+        "lower": 3.75,
+        "upper": 4.58,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "metric",
+      "name": "R-squared",
+      "value": 0.812,
+      "baseline_value": 0.0,
+      "delta": 0.812,
+      "unit": "r2",
+      "description": "Variance explained by TabPFN regression model."
+    },
+    {
+      "type": "chart",
+      "kind": "interval",
+      "title": "Quantile Prediction Intervals (10% - 90%)",
+      "description": "TabPFN predictive distribution quantiles compared against actual observed house prices.",
+      "data": {
+        "indices": [1, 2, 3, 4, 5],
+        "actuals": [24.0, 31.5, 18.2, 45.0, 22.8],
+        "q10": [20.5, 27.2, 15.1, 39.8, 19.4],
+        "q50": [23.8, 30.9, 17.8, 44.1, 22.3],
+        "q90": [27.9, 35.4, 21.0, 49.2, 26.1]
+      }
+    },
+    {
+      "type": "chart",
+      "kind": "scatter",
+      "title": "Predicted vs Actual Values",
+      "description": "Holdout test predictions plotted along identity line.",
+      "data": {
+        "actual": [24.0, 31.5, 18.2, 45.0, 22.8],
+        "predicted": [23.8, 30.9, 17.8, 44.1, 22.3]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Holdout Evaluation Samples",
+      "description": "Sample predictions with 80% credible intervals.",
+      "table": {
+        "cols": ["row_index", "actual_price", "predicted_mean", "ci_lower_10", "ci_upper_90"],
+        "types": ["int", "float", "float", "float", "float"],
+        "rows": [
+          [1, 24.0, 23.8, 20.5, 27.9],
+          [2, 31.5, 30.9, 27.2, 35.4],
+          [3, 18.2, 17.8, 15.1, 21.0],
+          [4, 45.0, 44.1, 39.8, 49.2],
+          [5, 22.8, 22.3, 19.4, 26.1]
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN-3.5 achieved an RMSE of 4.12k$ on holdout test set (56.4% reduction from naive mean baseline of 9.45k$). R² is 0.812. 92% of actuals fell inside the 80% prediction interval, verifying good probabilistic calibration."
+    },
+    {
+      "type": "download",
+      "filename": "housing_predictions_with_intervals.csv",
+      "format": "csv",
+      "description": "Predictions with mean, median, q10 and q90 bounds.",
+      "size_bytes": 1650,
+      "content": "row,actual,mean,median,q10,q90\n1,24.0,23.8,23.7,20.5,27.9\n2,31.5,30.9,30.8,27.2,35.4"
+    }
+  ],
+  "summary": "Completed regression run on 120 rows. RMSE improved from 9.45k$ to 4.12k$ (R² = 0.812)."
+}

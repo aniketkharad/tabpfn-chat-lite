@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "internal",
+    "message": "Internal processing exception occurred during plan compilation.",
+    "request_id": "req_int_01j7q34k89ze"
+  }
+}

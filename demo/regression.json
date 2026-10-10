@@ -1,0 +1,272 @@
+{
+  "run_id": "run_demo_regression",
+  "capability": "regression",
+  "description": "Housing price regression with scatter plot and quantile prediction intervals.",
+  "plan": {
+    "plan_id": "plan_demo_regression",
+    "capability": "regression",
+    "target": "price_k",
+    "features": [
+      "sqft",
+      "bedrooms",
+      "building_age"
+    ],
+    "params": {
+      "split_strategy": "random",
+      "holdout_fraction": 0.2,
+      "random_seed": 42,
+      "eval_metric": "rmse",
+      "confidence_intervals": true
+    },
+    "estimate": {
+      "gemini_calls": 2,
+      "tabpfn_tokens": 10000,
+      "pct_of_daily_budget": 0.2
+    }
+  },
+  "events": [
+    {
+      "event": "queued",
+      "elapsed_ms": 0,
+      "data": {
+        "position": 1,
+        "eta_s": 0.5
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 150,
+      "data": {
+        "stage": "planning",
+        "message": "Planning regression"
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 320,
+      "data": {
+        "stage": "fitting",
+        "message": "Executing deterministic TabPFN analysis"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 520,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 560,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 600,
+      "data": {
+        "type": "chart"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 640,
+      "data": {
+        "type": "chart"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 680,
+      "data": {
+        "type": "table"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 720,
+      "data": {
+        "type": "download"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 760,
+      "data": {
+        "type": "text"
+      }
+    },
+    {
+      "event": "done",
+      "elapsed_ms": 810,
+      "data": {
+        "summary": "Regression demo completed.",
+        "run_id": "run_demo_regression"
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "RMSE",
+      "value": 4.12,
+      "baseline_value": 9.45,
+      "delta": -5.33,
+      "unit": "error",
+      "description": "Root Mean Squared Error on holdout test set vs naive mean baseline.",
+      "uncertainty": {
+        "lower": 3.75,
+        "upper": 4.57,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "metric",
+      "name": "R-squared",
+      "value": 0.812,
+      "baseline_value": 0.0,
+      "delta": 0.812,
+      "unit": "r2",
+      "description": "Variance explained by TabPFN regression model."
+    },
+    {
+      "type": "chart",
+      "kind": "scatter",
+      "title": "Predicted vs Actual Values",
+      "description": "Holdout test predictions plotted along identity line.",
+      "data": {
+        "actual": [
+          24.0,
+          31.5,
+          18.2,
+          45.0,
+          22.8
+        ],
+        "predicted": [
+          23.8,
+          30.9,
+          17.8,
+          44.1,
+          22.3
+        ]
+      }
+    },
+    {
+      "type": "chart",
+      "kind": "interval",
+      "title": "Quantile Prediction Intervals (10% - 90%)",
+      "description": "TabPFN predictive distribution quantiles compared against actual observed values.",
+      "data": {
+        "indices": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "actuals": [
+          24.0,
+          31.5,
+          18.2,
+          45.0,
+          22.8
+        ],
+        "q10": [
+          20.5,
+          27.6,
+          14.5,
+          40.8,
+          19.0
+        ],
+        "q50": [
+          23.8,
+          30.9,
+          17.8,
+          44.1,
+          22.3
+        ],
+        "q90": [
+          27.1,
+          34.2,
+          21.1,
+          47.4,
+          25.6
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Holdout Evaluation Samples",
+      "description": "Sample predictions with 80% credible intervals.",
+      "table": {
+        "cols": [
+          "row_index",
+          "actual_price",
+          "predicted_mean",
+          "ci_lower_10",
+          "ci_upper_90"
+        ],
+        "types": [
+          "int",
+          "float",
+          "float",
+          "float",
+          "float"
+        ],
+        "rows": [
+          [
+            1,
+            24.0,
+            23.8,
+            20.5,
+            27.1
+          ],
+          [
+            2,
+            31.5,
+            30.9,
+            27.6,
+            34.2
+          ],
+          [
+            3,
+            18.2,
+            17.8,
+            14.5,
+            21.1
+          ],
+          [
+            4,
+            45.0,
+            44.1,
+            40.8,
+            47.4
+          ],
+          [
+            5,
+            22.8,
+            22.3,
+            19.0,
+            25.6
+          ]
+        ]
+      }
+    },
+    {
+      "type": "download",
+      "filename": "housing_predictions_with_intervals.csv",
+      "format": "csv",
+      "description": "Predictions with mean, median, q10 and q90 bounds.",
+      "size_bytes": 166,
+      "content": "row_index,actual,predicted_mean,ci_lower_10,ci_upper_90\n1,24.0,23.8,20.5,27.1\n2,31.5,30.9,27.6,34.2\n3,18.2,17.8,14.5,21.1\n4,45.0,44.1,40.8,47.4\n5,22.8,22.3,19.0,25.6\n"
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN regression achieved an RMSE of 4.12 vs naive baseline 9.45 (R² = 0.812). Predictive quantiles (q10 to q90) and predicted vs actual scatter plots are detailed above."
+    }
+  ],
+  "summary": "TabPFN regression achieved an RMSE of 4.12 vs naive baseline 9.45 (R² = 0.812). Predictive quantiles (q10 to q90) and predicted vs actual scatter plots are detailed above."
+}

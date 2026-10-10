@@ -1,0 +1,205 @@
+{
+  "run_id": "run_demo_interpretability",
+  "capability": "interpretability",
+  "description": "Diagnostic feature importance attributions with permutation scores.",
+  "plan": {
+    "plan_id": "plan_demo_interpretability",
+    "capability": "interpretability",
+    "target": "risk",
+    "features": [
+      "glucose",
+      "insulin",
+      "bmi",
+      "age"
+    ],
+    "params": {
+      "split_strategy": "random",
+      "holdout_fraction": 0.2,
+      "random_seed": 42,
+      "eval_metric": "accuracy",
+      "confidence_intervals": true
+    },
+    "estimate": {
+      "gemini_calls": 2,
+      "tabpfn_tokens": 10000,
+      "pct_of_daily_budget": 0.2
+    }
+  },
+  "events": [
+    {
+      "event": "queued",
+      "elapsed_ms": 0,
+      "data": {
+        "position": 1,
+        "eta_s": 0.5
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 150,
+      "data": {
+        "stage": "planning",
+        "message": "Planning interpretability"
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 320,
+      "data": {
+        "stage": "fitting",
+        "message": "Executing deterministic TabPFN analysis"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 520,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 560,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 600,
+      "data": {
+        "type": "chart"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 640,
+      "data": {
+        "type": "table"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 680,
+      "data": {
+        "type": "download"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 720,
+      "data": {
+        "type": "text"
+      }
+    },
+    {
+      "event": "done",
+      "elapsed_ms": 770,
+      "data": {
+        "summary": "Interpretability demo completed.",
+        "run_id": "run_demo_interpretability"
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Top Feature Influence",
+      "value": 0.245,
+      "unit": "roc_auc_drop",
+      "description": "Drop in ROC-AUC when Glucose Level is randomly permuted."
+    },
+    {
+      "type": "metric",
+      "name": "Cumulative Top-3 Share",
+      "value": 78.4,
+      "unit": "percent",
+      "description": "Percentage of total permutation importance variance accounted for by top 3 features."
+    },
+    {
+      "type": "chart",
+      "kind": "importance",
+      "title": "Permutation Feature Importance",
+      "description": "Validation ROC-AUC drop per feature across Monte Carlo permutations.",
+      "data": {
+        "features": [
+          "glucose",
+          "insulin",
+          "bmi",
+          "age"
+        ],
+        "scores": [
+          0.245,
+          0.138,
+          0.092,
+          0.041
+        ],
+        "std_dev": [
+          0.018,
+          0.012,
+          0.009,
+          0.005
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Feature Importance Summary Table",
+      "description": "Ranked importance scores with statistical significance bounds.",
+      "table": {
+        "cols": [
+          "rank",
+          "feature",
+          "roc_auc_drop",
+          "p_value"
+        ],
+        "types": [
+          "int",
+          "string",
+          "float",
+          "float"
+        ],
+        "rows": [
+          [
+            1,
+            "glucose",
+            0.245,
+            0.0001
+          ],
+          [
+            2,
+            "insulin",
+            0.138,
+            0.0002
+          ],
+          [
+            3,
+            "bmi",
+            0.092,
+            0.0003
+          ],
+          [
+            4,
+            "age",
+            0.041,
+            0.0004
+          ]
+        ]
+      }
+    },
+    {
+      "type": "download",
+      "filename": "feature_importance_breakdown.json",
+      "format": "json",
+      "description": "Full permutation feature importance weights and distribution variance.",
+      "size_bytes": 128,
+      "content": "{\n  \"top_feature\": \"glucose\",\n  \"scores\": {\n    \"glucose\": 0.245,\n    \"insulin\": 0.138,\n    \"bmi\": 0.092,\n    \"age\": 0.041\n  }\n}"
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN permutation interpretability measured a top feature influence of 0.245 accounting for 78.4% cumulative variance. Feature importance rankings and attribution summaries are detailed above."
+    }
+  ],
+  "summary": "TabPFN permutation interpretability measured a top feature influence of 0.245 accounting for 78.4% cumulative variance. Feature importance rankings and attribution summaries are detailed above."
+}

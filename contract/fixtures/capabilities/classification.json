@@ -1,0 +1,84 @@
+{
+  "run_id": "run_01_classification",
+  "plan_id": "plan_churn_classification_v1",
+  "capability": "classification",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "ROC-AUC",
+      "value": 0.885,
+      "baseline_value": 0.5,
+      "delta": 0.385,
+      "unit": "auc",
+      "description": "Holdout ROC-AUC vs naive majority-class baseline.",
+      "uncertainty": {
+        "lower": 0.84,
+        "upper": 0.93,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "metric",
+      "name": "Accuracy",
+      "value": 0.857,
+      "baseline_value": 0.714,
+      "delta": 0.143,
+      "unit": "ratio",
+      "description": "Classification accuracy on 28 holdout test instances.",
+      "uncertainty": {
+        "lower": 0.72,
+        "upper": 0.94,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "chart",
+      "kind": "reliability",
+      "title": "Calibration Reliability Curve",
+      "description": "Empirical accuracy plotted across predicted probability deciles.",
+      "data": {
+        "bins": [0.1, 0.3, 0.5, 0.7, 0.9],
+        "observed_frequencies": [0.08, 0.29, 0.52, 0.68, 0.91],
+        "sample_counts": [6, 7, 5, 5, 5]
+      }
+    },
+    {
+      "type": "chart",
+      "kind": "importance",
+      "title": "Feature Importance (Permutation)",
+      "description": "Drop in ROC-AUC when feature column is randomly shuffled.",
+      "data": {
+        "features": ["tenure", "monthly_charges", "total_charges", "age"],
+        "scores": [0.142, 0.089, 0.051, 0.012]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Holdout Confusion Matrix",
+      "description": "Confusion matrix counts on holdout split.",
+      "table": {
+        "cols": ["actual_class", "pred_no", "pred_yes"],
+        "types": ["string", "int", "int"],
+        "rows": [
+          ["Actual No", 18, 2],
+          ["Actual Yes", 2, 6]
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN-3.5 attained an ROC-AUC of 0.885 (95% CI: 0.840–0.930), outperforming the majority baseline (0.500) by +0.385. Accuracy reached 85.7% vs 71.4% baseline. Tenure is the strongest predictor of customer churn."
+    },
+    {
+      "type": "download",
+      "filename": "classification_predictions.csv",
+      "format": "csv",
+      "description": "Predictions with class probabilities for all holdout rows.",
+      "size_bytes": 1420,
+      "content": "row_id,actual,pred,prob_churn\n0,0,0,0.12\n1,1,1,0.88\n2,0,0,0.05\n3,1,1,0.76"
+    }
+  ],
+  "summary": "Completed classification run on 140 rows. Model achieved 0.885 ROC-AUC with +0.385 gain over baseline."
+}

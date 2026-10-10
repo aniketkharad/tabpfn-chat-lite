@@ -1,0 +1,17 @@
+{
+  "scenario": "Session attempts 16th conversational turn exceeding max turns limit of 15",
+  "input": {
+    "session_turn_count": 15,
+    "attempted_request": "POST /api/chat",
+    "payload": {
+      "message": "Let me tweak one more parameter."
+    }
+  },
+  "expected_error": {
+    "error": {
+      "code": "turn_limit",
+      "message": "Session turn limit exceeded (16th turn attempted; max 15 allowed per session).",
+      "request_id": "req_hostile_trn_01"
+    }
+  }
+}

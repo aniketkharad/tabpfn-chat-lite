@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tabpfn-chat-lite.internal/schemas/result_block.json",
+  "title": "ResultBlock",
+  "description": "Discrete visual or data artifact rendered in the UI or streamed during analysis execution.",
+  "oneOf": [
+    {
+      "title": "MetricBlock",
+      "type": "object",
+      "required": ["type", "name", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "metric"
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": ["number", "string"]
+        },
+        "baseline_value": {
+          "type": ["number", "null"]
+        },
+        "delta": {
+          "type": ["number", "null"]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "uncertainty": {
+          "type": "object",
+          "required": ["lower", "upper", "confidence_level"],
+          "additionalProperties": false,
+          "properties": {
+            "lower": { "type": "number" },
+            "upper": { "type": "number" },
+            "confidence_level": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "title": "TableBlock",
+      "type": "object",
+      "required": ["type", "title", "table"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "table"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "table": {
+          "$ref": "table.json"
+        }
+      }
+    },
+    {
+      "title": "ChartBlock",
+      "type": "object",
+      "required": ["type", "kind", "title", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "chart"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["bar", "line", "scatter", "reliability", "interval", "importance"]
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "description": "Chart-specific data coordinates and metadata for hand-rolled SVG renderer.",
+          "additionalProperties": true
+        }
+      }
+    },
+    {
+      "title": "TextBlock",
+      "type": "object",
+      "required": ["type", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "description": "Markdown text content, such as grounded narration or explanation."
+        }
+      }
+    },
+    {
+      "title": "DownloadBlock",
+      "type": "object",
+      "required": ["type", "filename", "format", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "download"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["csv", "json"]
+        },
+        "content": {
+          "type": "string",
+          "description": "Raw string content (CSV or serialized JSON) or base64 data ready for browser download."
+        },
+        "description": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        }
+      }
+    }
+  ]
+}

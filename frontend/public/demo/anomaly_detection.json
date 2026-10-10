@@ -1,0 +1,198 @@
+{
+  "run_id": "run_demo_anomaly_detection",
+  "capability": "anomaly_detection",
+  "description": "Equipment telemetry anomaly detection with outlier score distribution.",
+  "plan": {
+    "plan_id": "plan_demo_anomaly_detection",
+    "capability": "anomaly_detection",
+    "target": "vibration",
+    "features": [
+      "temp"
+    ],
+    "params": {
+      "split_strategy": "random",
+      "holdout_fraction": 0.2,
+      "random_seed": 42,
+      "eval_metric": "auto",
+      "confidence_intervals": true
+    },
+    "estimate": {
+      "gemini_calls": 2,
+      "tabpfn_tokens": 10000,
+      "pct_of_daily_budget": 0.2
+    }
+  },
+  "events": [
+    {
+      "event": "queued",
+      "elapsed_ms": 0,
+      "data": {
+        "position": 1,
+        "eta_s": 0.5
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 150,
+      "data": {
+        "stage": "planning",
+        "message": "Planning anomaly_detection"
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 320,
+      "data": {
+        "stage": "fitting",
+        "message": "Executing deterministic TabPFN analysis"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 520,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 560,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 600,
+      "data": {
+        "type": "chart"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 640,
+      "data": {
+        "type": "table"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 680,
+      "data": {
+        "type": "download"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 720,
+      "data": {
+        "type": "text"
+      }
+    },
+    {
+      "event": "done",
+      "elapsed_ms": 770,
+      "data": {
+        "summary": "Anomaly_detection demo completed.",
+        "run_id": "run_demo_anomaly_detection"
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Anomalies Flagged",
+      "value": 4,
+      "baseline_value": 0,
+      "delta": 4,
+      "unit": "count",
+      "description": "Total instances identified with log-likelihood outlier probability > 0.95."
+    },
+    {
+      "type": "metric",
+      "name": "Contamination Rate",
+      "value": 10.0,
+      "unit": "percent",
+      "description": "Percentage of dataset flagged as anomalous (4 out of 40 samples)."
+    },
+    {
+      "type": "chart",
+      "kind": "bar",
+      "title": "Anomaly Score Distribution",
+      "description": "Outlier anomaly scores across top evaluated records.",
+      "data": {
+        "categories": [
+          "Row 0",
+          "Row 1",
+          "Row 2",
+          "Row 3"
+        ],
+        "scores": [
+          0.985,
+          0.991,
+          0.962,
+          0.974
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Detected Outlier Records",
+      "description": "Flagged anomalous records with outlier likelihood scores.",
+      "table": {
+        "cols": [
+          "row_index",
+          "vibration",
+          "temperature",
+          "outlier_score"
+        ],
+        "types": [
+          "int",
+          "float",
+          "float",
+          "float"
+        ],
+        "rows": [
+          [
+            48,
+            8.45,
+            112.4,
+            0.985
+          ],
+          [
+            92,
+            9.72,
+            118.1,
+            0.991
+          ],
+          [
+            104,
+            7.89,
+            105.3,
+            0.962
+          ],
+          [
+            118,
+            8.11,
+            109.8,
+            0.974
+          ]
+        ]
+      }
+    },
+    {
+      "type": "download",
+      "filename": "equipment_anomaly_scores.csv",
+      "format": "csv",
+      "description": "Complete dataset with per-row anomaly score and outlier boolean flag.",
+      "size_bytes": 159,
+      "content": "row_index,vibration,temperature,outlier_score,is_anomaly\n48,8.45,112.4,0.985,true\n92,9.72,118.1,0.991,true\n104,7.89,105.3,0.962,true\n118,8.11,109.8,0.974,true\n"
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN anomaly detection identified 4 outlier records (10.0% contamination rate). Individual anomaly score bars and flagged row telemetry are detailed in the blocks."
+    }
+  ],
+  "summary": "TabPFN anomaly detection identified 4 outlier records (10.0% contamination rate). Individual anomaly score bars and flagged row telemetry are detailed in the blocks."
+}

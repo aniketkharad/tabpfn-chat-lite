@@ -1,0 +1,9 @@
+{
+  "run_id": "run_01j7q34k89z2m_exec",
+  "status": "queued",
+  "estimate": {
+    "gemini_calls": 2,
+    "tabpfn_tokens": 10000,
+    "pct_of_daily_budget": 0.2
+  }
+}

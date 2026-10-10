@@ -1,0 +1,17 @@
+{
+  "scenario": "Admin has engaged emergency kill switch disabling live upstream calls",
+  "input": {
+    "kill_switch_active": true,
+    "attempted_request": "POST /api/run",
+    "payload": {
+      "plan_id": "plan_churn_classification_v1"
+    }
+  },
+  "expected_error": {
+    "error": {
+      "code": "kill_switch",
+      "message": "Service paused by administrator emergency kill switch. Zero-quota Demo Mode is active.",
+      "request_id": "req_hostile_kil_01"
+    }
+  }
+}

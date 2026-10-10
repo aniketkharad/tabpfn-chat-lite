@@ -1,0 +1,45 @@
+{
+  "dataset_id": "ds_8a7c1f20bc34",
+  "dataset_card": {
+    "row_count": 5,
+    "col_count": 3,
+    "columns": [
+      {
+        "name": "age",
+        "type": "int",
+        "null_count": 0,
+        "sample_values": [25, 42, 37, 59, 19]
+      },
+      {
+        "name": "tenure",
+        "type": "float",
+        "null_count": 0,
+        "sample_values": [1.5, 4.0, 2.2, 8.5, 0.5]
+      },
+      {
+        "name": "churn",
+        "type": "string",
+        "null_count": 0,
+        "sample_values": ["no", "yes", "no", "yes", "no"]
+      }
+    ],
+    "preview_rows": [
+      [25, 1.5, "no"],
+      [42, 4.0, "yes"],
+      [37, 2.2, "no"],
+      [59, 8.5, "yes"],
+      [19, 0.5, "no"]
+    ]
+  },
+  "table": {
+    "cols": ["age", "tenure", "churn"],
+    "types": ["int", "float", "string"],
+    "rows": [
+      [25, 1.5, "no"],
+      [42, 4.0, "yes"],
+      [37, 2.2, "no"],
+      [59, 8.5, "yes"],
+      [19, 0.5, "no"]
+    ]
+  }
+}

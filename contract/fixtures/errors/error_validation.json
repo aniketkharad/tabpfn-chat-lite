@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "validation",
+    "message": "CSV column count exceeds limit of 50 columns (got 52).",
+    "request_id": "req_val_01j7q34k89z2"
+  }
+}

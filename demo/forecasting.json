@@ -1,0 +1,243 @@
+{
+  "run_id": "run_demo_forecasting",
+  "capability": "forecasting",
+  "description": "Monthly volume time series projection with confidence bands.",
+  "plan": {
+    "plan_id": "plan_demo_forecasting",
+    "capability": "forecasting",
+    "target": "volume",
+    "features": [
+      "period"
+    ],
+    "params": {
+      "split_strategy": "random",
+      "holdout_fraction": 0.2,
+      "random_seed": 42,
+      "eval_metric": "rmse",
+      "confidence_intervals": true
+    },
+    "estimate": {
+      "gemini_calls": 2,
+      "tabpfn_tokens": 10000,
+      "pct_of_daily_budget": 0.2
+    }
+  },
+  "events": [
+    {
+      "event": "queued",
+      "elapsed_ms": 0,
+      "data": {
+        "position": 1,
+        "eta_s": 0.5
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 150,
+      "data": {
+        "stage": "planning",
+        "message": "Planning forecasting"
+      }
+    },
+    {
+      "event": "status",
+      "elapsed_ms": 320,
+      "data": {
+        "stage": "fitting",
+        "message": "Executing deterministic TabPFN analysis"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 520,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 560,
+      "data": {
+        "type": "metric"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 600,
+      "data": {
+        "type": "chart"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 640,
+      "data": {
+        "type": "table"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 680,
+      "data": {
+        "type": "download"
+      }
+    },
+    {
+      "event": "block",
+      "elapsed_ms": 720,
+      "data": {
+        "type": "text"
+      }
+    },
+    {
+      "event": "done",
+      "elapsed_ms": 770,
+      "data": {
+        "summary": "Forecasting demo completed.",
+        "run_id": "run_demo_forecasting"
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Horizon RMSE",
+      "value": 18.4,
+      "baseline_value": 46.2,
+      "delta": -27.8,
+      "unit": "passengers",
+      "description": "Root Mean Squared Error over 12-month forward horizon vs naive last-value baseline.",
+      "uncertainty": {
+        "lower": 14.2,
+        "upper": 22.9,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "metric",
+      "name": "MAPE",
+      "value": 4.1,
+      "baseline_value": 11.8,
+      "delta": -7.7,
+      "unit": "percent",
+      "description": "Mean Absolute Percentage Error on forward forecast horizon."
+    },
+    {
+      "type": "chart",
+      "kind": "line",
+      "title": "Historical Series and Forward Forecast",
+      "description": "Historical passenger volume series joined with 12-month forward TabPFN predictions.",
+      "data": {
+        "x": [
+          "1959-01",
+          "1959-04",
+          "1959-07",
+          "1959-10",
+          "1960-01",
+          "1960-04",
+          "1960-07",
+          "1960-10"
+        ],
+        "historical": [
+          360,
+          396,
+          548,
+          407,
+          417,
+          null,
+          null,
+          null
+        ],
+        "forecast": [
+          null,
+          null,
+          null,
+          null,
+          417,
+          461,
+          622,
+          461
+        ],
+        "lower_80": [
+          null,
+          null,
+          null,
+          null,
+          390,
+          430,
+          580,
+          420
+        ],
+        "upper_80": [
+          null,
+          null,
+          null,
+          null,
+          444,
+          492,
+          664,
+          502
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Forward Forecast Horizon",
+      "description": "Predicted periods with confidence bounds.",
+      "table": {
+        "cols": [
+          "period",
+          "forecast_mean",
+          "lower_80",
+          "upper_80"
+        ],
+        "types": [
+          "string",
+          "float",
+          "float",
+          "float"
+        ],
+        "rows": [
+          [
+            "1960-01",
+            417.0,
+            390.0,
+            444.0
+          ],
+          [
+            "1960-04",
+            461.0,
+            430.0,
+            492.0
+          ],
+          [
+            "1960-07",
+            622.0,
+            580.0,
+            664.0
+          ],
+          [
+            "1960-10",
+            461.0,
+            420.0,
+            502.0
+          ]
+        ]
+      }
+    },
+    {
+      "type": "download",
+      "filename": "passenger_forecast_12m.csv",
+      "format": "csv",
+      "description": "Full forecasted trajectory with quantiles.",
+      "size_bytes": 143,
+      "content": "period,forecast_mean,lower_80,upper_80\n1960-01,417.0,390.0,444.0\n1960-04,461.0,430.0,492.0\n1960-07,622.0,580.0,664.0\n1960-10,461.0,420.0,502.0\n"
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN time series forecasting projected forward trajectory with horizon RMSE of 18.4 and MAPE of 4.1%. Historical continuity and 80% credible forecast intervals are provided in the charts."
+    }
+  ],
+  "summary": "TabPFN time series forecasting projected forward trajectory with horizon RMSE of 18.4 and MAPE of 4.1%. Historical continuity and 80% credible forecast intervals are provided in the charts."
+}

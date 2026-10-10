@@ -1,0 +1,15 @@
+{
+  "scenario": "Uploading CSV containing customer social security numbers and email addresses",
+  "input": {
+    "file_name": "leaked_customers.csv",
+    "content_type": "text/csv",
+    "raw_csv": "name,ssn,email\nAlice,000-12-3456,alice@confidential.com\nBob,111-22-3333,bob@secret.org"
+  },
+  "expected_error": {
+    "error": {
+      "code": "pii_detected",
+      "message": "PII screening rejected file: Column 'email' contains email addresses; 'ssn' matches SSN pattern.",
+      "request_id": "req_hostile_pii_01"
+    }
+  }
+}

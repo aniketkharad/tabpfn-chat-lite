@@ -1,0 +1,38 @@
+# Git and local metadata
+.git/
+.gitignore
+.dockerignore
+.DS_Store
+
+# Virtual environment and Python caches
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Node / Gateway / Frontend build caches
+node_modules/
+frontend/node_modules/
+gateway/node_modules/
+gateway/.wrangler/
+
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Local runtime data and session caches
+data/
+runs/*
+!runs/demo_run/
+workspaces/
+
+# Demos and Case Study Showcase Artifacts (Excluded from production image)
+demos/
+CASE_STUDIES.md

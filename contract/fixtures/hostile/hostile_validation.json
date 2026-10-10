@@ -1,0 +1,15 @@
+{
+  "scenario": "Oversized string cell and column count exceeding limit of 50 columns",
+  "input": {
+    "file_name": "overflow.csv",
+    "content_type": "text/csv",
+    "raw_csv": "col1,col2\n\"this_string_is_way_longer_than_the_allowed_sixty_four_characters_limit_boundary_1234567890\",123"
+  },
+  "expected_error": {
+    "error": {
+      "code": "validation",
+      "message": "Cell value exceeds maximum allowed length of 64 characters.",
+      "request_id": "req_hostile_val_01"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "pii_detected",
+    "message": "PII screening rejected file: Column 'customer_email' contains valid email patterns.",
+    "request_id": "req_pii_01j7q34k89z4"
+  }
+}

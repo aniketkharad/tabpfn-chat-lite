@@ -1,0 +1,73 @@
+{
+  "run_id": "run_06_interpretability",
+  "plan_id": "plan_medical_diagnostics_v1",
+  "capability": "interpretability",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Top Feature Influence",
+      "value": 0.245,
+      "unit": "roc_auc_drop",
+      "description": "Drop in ROC-AUC when Glucose Level is randomly permuted."
+    },
+    {
+      "type": "metric",
+      "name": "Cumulative Top-3 Share",
+      "value": 78.4,
+      "unit": "percent",
+      "description": "Percentage of total permutation importance variance accounted for by top 3 features."
+    },
+    {
+      "type": "chart",
+      "kind": "importance",
+      "title": "Permutation Feature Importance",
+      "description": "Validation ROC-AUC drop per feature across 50 Monte Carlo permutations.",
+      "data": {
+        "features": ["glucose", "insulin", "bmi", "age", "pedigree"],
+        "scores": [0.245, 0.138, 0.092, 0.041, 0.028],
+        "std_dev": [0.018, 0.012, 0.009, 0.005, 0.004]
+      }
+    },
+    {
+      "type": "chart",
+      "kind": "line",
+      "title": "Partial Dependence: Glucose Level",
+      "description": "Marginal effect of glucose level on predicted probability of diagnostic outcome.",
+      "data": {
+        "x": [80, 100, 120, 140, 160, 180],
+        "pdp_mean": [0.08, 0.14, 0.28, 0.58, 0.82, 0.94]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Feature Importance Summary Table",
+      "description": "Ranked importance scores with statistical significance bounds.",
+      "table": {
+        "cols": ["rank", "feature", "roc_auc_drop", "p_value"],
+        "types": ["int", "string", "float", "float"],
+        "rows": [
+          [1, "glucose", 0.245, 0.0001],
+          [2, "insulin", 0.138, 0.0008],
+          [3, "bmi", 0.092, 0.0042],
+          [4, "age", 0.041, 0.0310],
+          [5, "pedigree", 0.028, 0.0840]
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "Interpretability analysis identifies glucose (0.245 drop) and insulin (0.138 drop) as primary drivers. Partial dependence reveals a steep non-linear threshold in prediction probability between 120 and 150 mg/dL glucose."
+    },
+    {
+      "type": "download",
+      "filename": "feature_importance_breakdown.json",
+      "format": "json",
+      "description": "Full permutation feature importance weights and distribution variance.",
+      "size_bytes": 1120,
+      "content": "{\"top_feature\":\"glucose\",\"scores\":{\"glucose\":0.245,\"insulin\":0.138,\"bmi\":0.092}}"
+    }
+  ],
+  "summary": "Completed feature importance analysis. Glucose and insulin account for 78.4% of total predictive power."
+}

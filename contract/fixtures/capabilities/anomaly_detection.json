@@ -1,0 +1,64 @@
+{
+  "run_id": "run_04_anomaly_detection",
+  "plan_id": "plan_equipment_anomalies_v1",
+  "capability": "anomaly_detection",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Anomalies Flagged",
+      "value": 4,
+      "baseline_value": 0,
+      "delta": 4,
+      "unit": "count",
+      "description": "Total instances identified with log-likelihood outlier probability > 0.95."
+    },
+    {
+      "type": "metric",
+      "name": "Contamination Rate",
+      "value": 3.33,
+      "unit": "percent",
+      "description": "Percentage of dataset flagged as anomalous (4 out of 120 samples)."
+    },
+    {
+      "type": "chart",
+      "kind": "scatter",
+      "title": "Anomaly Score Distribution",
+      "description": "Negative log-likelihood score plotted against vibration amplitude.",
+      "data": {
+        "x": [0.12, 0.15, 0.18, 0.22, 0.85, 0.92],
+        "y": [1.2, 1.4, 1.8, 2.1, 8.4, 9.7],
+        "is_outlier": [false, false, false, false, true, true]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Detected Outlier Records",
+      "description": "Top flagged anomalous sensor telemetry rows.",
+      "table": {
+        "cols": ["row_index", "sensor_vibration", "temperature", "outlier_score"],
+        "types": ["int", "float", "float", "float"],
+        "rows": [
+          [48, 8.45, 112.4, 0.985],
+          [92, 9.72, 118.1, 0.991],
+          [104, 7.89, 105.3, 0.962],
+          [118, 8.11, 109.8, 0.974]
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN anomaly detection identified 4 anomalous sensor telemetry records (3.3% of records). Outliers exhibit extreme vibration (>7.8) and temperature spikes above 105°C."
+    },
+    {
+      "type": "download",
+      "filename": "equipment_anomaly_scores.csv",
+      "format": "csv",
+      "description": "Complete dataset with per-row anomaly score and outlier boolean flag.",
+      "size_bytes": 1280,
+      "content": "row,vibration,temperature,outlier_score,is_anomaly\n48,8.45,112.4,0.985,true\n92,9.72,118.1,0.991,true"
+    }
+  ],
+  "summary": "Completed anomaly detection on 120 rows. 4 anomalous sensor states identified."
+}

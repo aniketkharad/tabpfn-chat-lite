@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tabpfn-chat-lite.internal/schemas/error.json",
+  "title": "ErrorEnvelope",
+  "description": "Standard error response envelope returned by both Cloudflare Worker gateway and FastAPI backend.",
+  "type": "object",
+  "required": ["error"],
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message", "request_id"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Closed error code enum representing system failure or policy violation.",
+          "enum": [
+            "validation",
+            "unsupported",
+            "pii_detected",
+            "rate_limited",
+            "queue_full",
+            "quota_gemini",
+            "quota_tabpfn",
+            "capacity_exhausted",
+            "kill_switch",
+            "turn_limit",
+            "backend_waking",
+            "upstream_unavailable",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "description": "Technical or actionable description of the error."
+        },
+        "retry_after_s": {
+          "type": "integer",
+          "description": "Suggested client backoff delay in seconds for transient or rate-limited errors.",
+          "minimum": 0
+        },
+        "request_id": {
+          "type": "string",
+          "description": "Unique identifier (UUID or salted request hash) matching logs for tracing."
+        }
+      }
+    }
+  }
+}

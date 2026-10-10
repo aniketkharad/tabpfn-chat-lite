@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "turn_limit",
+    "message": "Maximum turn limit of 15 conversational turns reached for this session.",
+    "request_id": "req_trn_01j7q34k89zb"
+  }
+}

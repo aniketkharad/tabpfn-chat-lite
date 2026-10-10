@@ -1,0 +1,16 @@
+{
+  "scenario": "Prior Labs TabPFN API connection times out or returns 503 during prediction call",
+  "input": {
+    "target_upstream": "https://api.priorlabs.ai/tabpfn/predict",
+    "upstream_http_status": 503,
+    "attempted_request": "POST /api/run"
+  },
+  "expected_error": {
+    "error": {
+      "code": "upstream_unavailable",
+      "message": "Upstream TabPFN API returned HTTP 503 Service Unavailable. Please retry.",
+      "retry_after_s": 5,
+      "request_id": "req_hostile_ups_01"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "scenario": "Session requests 21st Gemini planning turn exceeding 20 RPD free tier allocation",
+  "input": {
+    "total_gemini_requests_today": 20,
+    "attempted_request": "POST /api/chat",
+    "prompt": "Try generating another plan with completely different features."
+  },
+  "expected_error": {
+    "error": {
+      "code": "quota_gemini",
+      "message": "Public Gemini free-tier daily quota exhausted (20/20 requests used). Resets at 00:00:00 UTC.",
+      "retry_after_s": 5400,
+      "request_id": "req_hostile_qgm_01"
+    }
+  }
+}

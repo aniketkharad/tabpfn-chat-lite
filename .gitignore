@@ -1,0 +1,39 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# python / uv
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv/
+.pytest_cache/
+
+# javascript / bun / node
+node_modules/
+.wrangler/
+
+# run artifacts and data caches
+runs/*
+!runs/demo_run/
+!runs/demo_run/**
+data/
+workspaces/*/data/
+relarena-cache/
+.cache/
+outbox.jsonl
+
+# os
+.DS_Store
+
+# Documentation and thinking steps (exclude from git)
+docs/
+**/*.md
+!/README.md
+!src/**/*.md

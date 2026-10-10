@@ -1,0 +1,73 @@
+{
+  "run_id": "run_03_forecasting",
+  "plan_id": "plan_air_passengers_forecast_v1",
+  "capability": "forecasting",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Horizon RMSE",
+      "value": 18.4,
+      "baseline_value": 46.2,
+      "delta": -27.8,
+      "unit": "passengers",
+      "description": "Root Mean Squared Error over 12-month forward horizon vs last-known-value baseline.",
+      "uncertainty": {
+        "lower": 14.2,
+        "upper": 22.9,
+        "confidence_level": 0.95
+      }
+    },
+    {
+      "type": "metric",
+      "name": "MAPE",
+      "value": 4.1,
+      "baseline_value": 11.8,
+      "delta": -7.7,
+      "unit": "percent",
+      "description": "Mean Absolute Percentage Error on test horizon."
+    },
+    {
+      "type": "chart",
+      "kind": "line",
+      "title": "Historical Series and Forward Forecast",
+      "description": "Historical passenger volume series joined with 12-month forward TabPFN predictions.",
+      "data": {
+        "x": ["1959-01", "1959-04", "1959-07", "1959-10", "1960-01", "1960-04", "1960-07", "1960-10"],
+        "historical": [360, 396, 548, 407, 417, null, null, null],
+        "forecast": [null, null, null, null, 417, 461, 622, 461],
+        "lower_80": [null, null, null, null, 390, 430, 580, 420],
+        "upper_80": [null, null, null, null, 444, 492, 664, 502]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Forward Forecast Horizon",
+      "description": "Predicted periods with confidence bounds.",
+      "table": {
+        "cols": ["period", "forecast_mean", "lower_80", "upper_80"],
+        "types": ["string", "float", "float", "float"],
+        "rows": [
+          ["1960-01", 417.0, 390.0, 444.0],
+          ["1960-04", 461.0, 430.0, 492.0],
+          ["1960-07", 622.0, 580.0, 664.0],
+          ["1960-10", 461.0, 420.0, 502.0]
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "TabPFN time series forecasting reduced test horizon RMSE from 46.2 to 18.4 passengers (-60.2%), capturing seasonal summer peaks in July 1960."
+    },
+    {
+      "type": "download",
+      "filename": "passenger_forecast_12m.csv",
+      "format": "csv",
+      "description": "Full forecasted trajectory with quantiles.",
+      "size_bytes": 940,
+      "content": "period,mean,median,q10,q90\n1960-01,417,416,390,444\n1960-04,461,460,430,492"
+    }
+  ],
+  "summary": "Completed 12-month forward forecast. Horizon RMSE: 18.4 (MAPE: 4.1%)."
+}

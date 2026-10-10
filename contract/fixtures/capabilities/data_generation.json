@@ -1,0 +1,63 @@
+{
+  "run_id": "run_05_data_generation",
+  "plan_id": "plan_synthetic_patients_v1",
+  "capability": "data_generation",
+  "status": "completed",
+  "blocks": [
+    {
+      "type": "metric",
+      "name": "Mean Wasserstein Distance",
+      "value": 0.042,
+      "unit": "distance",
+      "description": "Earth Mover's Distance between empirical marginal distributions and synthetic distributions."
+    },
+    {
+      "type": "metric",
+      "name": "Correlation Matrix Fidelity",
+      "value": 0.968,
+      "unit": "cosine_similarity",
+      "description": "Frobenius norm cosine similarity between empirical and synthetic feature correlation matrices."
+    },
+    {
+      "type": "chart",
+      "kind": "bar",
+      "title": "Marginal Feature Distribution Comparison",
+      "description": "Frequency bin alignment between real training data and synthetic generated data.",
+      "data": {
+        "categories": ["Age <30", "Age 30-50", "Age >50"],
+        "real_percentages": [24.0, 52.0, 24.0],
+        "synthetic_percentages": [23.5, 51.8, 24.7]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Generated Synthetic Patient Records Preview",
+      "description": "5 sampled rows from generated synthetic population.",
+      "table": {
+        "cols": ["patient_id", "age", "bmi", "blood_pressure", "diabetic"],
+        "types": ["string", "int", "float", "int", "boolean"],
+        "rows": [
+          ["syn_01", 34, 22.4, 118, false],
+          ["syn_02", 58, 29.1, 142, true],
+          ["syn_03", 42, 25.8, 126, false],
+          ["syn_04", 67, 31.4, 150, true],
+          ["syn_05", 28, 21.0, 114, false]
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "title": "Grounded Narration",
+      "content": "Generated 100 high-fidelity synthetic patient records with 0.968 correlation fidelity and 0.042 mean Wasserstein distance. Covariance between BMI and blood pressure was preserved without memorizing real rows."
+    },
+    {
+      "type": "download",
+      "filename": "synthetic_patients_generated.csv",
+      "format": "csv",
+      "description": "Complete dataset of 100 generated synthetic samples.",
+      "size_bytes": 3840,
+      "content": "patient_id,age,bmi,blood_pressure,diabetic\nsyn_01,34,22.4,118,false\nsyn_02,58,29.1,142,true"
+    }
+  ],
+  "summary": "Generated 100 synthetic tabular records with 0.968 correlation fidelity."
+}
