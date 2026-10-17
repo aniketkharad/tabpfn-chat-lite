@@ -462,3 +462,101 @@ def test_tabpfn_runner_sync_wrapper(sample_df, tmp_path):
     res2 = run_tabpfn_job_sync(spec, sample_df, raw_bytes, cache_dir=cache_dir, api_caller=mock_api)
     assert mock_api.call_count == 1
     assert res1 == res2
+
+
+# -------------------------------------------------------------------------
+# 5. Direct TabPFN Client & Partitions Tests
+# -------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fake_tabpfn_client_partitions(sample_df):
+    """Verify FakeTabPFNClient handles partitions for classification and regression."""
+    from tabchat.tabpfn import FakeTabPFNClient
+
+    fake = FakeTabPFNClient(seed=123)
+    X_train = sample_df[["tenure", "monthly_charges"]].iloc[:16]
+    y_train = sample_df["churn"].iloc[:16]
+    X_holdout = sample_df[["tenure", "monthly_charges"]].iloc[16:]
+
+    # Classification
+    res_clf = await fake.fit_and_predict_partitions("classification", X_train, y_train, X_holdout)
+    assert res_clf["task"] == "classification"
+    assert len(res_clf["predictions"]) == len(X_holdout)
+    assert len(res_clf["probabilities"]) == len(X_holdout)
+    assert len(res_clf["classes"]) == 2
+
+    # Regression
+    y_reg = sample_df["price"].iloc[:16]
+    res_reg = await fake.fit_and_predict_partitions("regression", X_train, y_reg, X_holdout)
+    assert res_reg["task"] == "regression"
+    assert len(res_reg["predictions"]) == len(X_holdout)
+    assert "q10" in res_reg["quantiles"]
+    assert "q50" in res_reg["quantiles"]
+    assert "q90" in res_reg["quantiles"]
+
+
+@pytest.mark.asyncio
+async def test_tabpfn_client_rest_openapi_flow(sample_df):
+    """Verify TabPFNClient calls Prior Labs endpoints with exact OpenAPI schemas."""
+    from unittest.mock import AsyncMock
+    from tabchat.tabpfn import TabPFNClient
+
+    client = TabPFNClient(token="mock_token_xyz")
+
+    X_train = sample_df[["tenure", "monthly_charges"]].iloc[:16]
+    y_train = sample_df["churn"].iloc[:16]
+    X_holdout = sample_df[["tenure", "monthly_charges"]].iloc[16:]
+
+    recorded_requests: list[tuple[str, str, dict]] = []
+
+    # Mock responses for the REST sequence
+    def mock_post(url, headers=None, json=None):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.raise_for_status = MagicMock()
+        recorded_requests.append(("POST", url, json or {}))
+        if "/prepare_train_set_upload" in url:
+            resp.json.return_value = {
+                "train_set_upload_id": "mock-train-id-123",
+                "x_train_info": {"signed_urls": ["https://s3.mock/train_x"], "required_headers": {}},
+                "y_train_info": {"signed_urls": ["https://s3.mock/train_y"], "required_headers": {}},
+            }
+        elif "/tabpfn/fit" in url:
+            resp.json.return_value = {"fitted_train_set_id": "mock-fitted-id-456", "status": "completed"}
+        elif "/prepare_test_set_upload" in url:
+            resp.json.return_value = {
+                "test_set_upload_id": "mock-test-id-789",
+                "x_test_info": {"signed_urls": ["https://s3.mock/test_x"], "required_headers": {}},
+            }
+        elif "/tabpfn/predict" in url:
+            resp.json.return_value = {
+                "prediction": [[0.85, 0.15] for _ in range(len(X_holdout))],
+                "metadata": {"classes": [0, 1]},
+            }
+        return resp
+
+    def mock_put(url, content=None, headers=None):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.raise_for_status = MagicMock()
+        recorded_requests.append(("PUT", url, {"size": len(content) if content else 0}))
+        return resp
+
+    with patch("httpx.AsyncClient") as mock_http_cls:
+        mock_instance = AsyncMock()
+        mock_instance.post.side_effect = mock_post
+        mock_instance.put.side_effect = mock_put
+        mock_http_cls.return_value.__aenter__.return_value = mock_instance
+
+        res = await client.fit_and_predict_partitions("classification", X_train, y_train, X_holdout)
+
+        assert res["task"] == "classification"
+        assert len(res["predictions"]) == len(X_holdout)
+        assert res["classes"] == [0, 1]
+
+        # Verify endpoint call sequence and OpenAPI payload fields
+        assert any("prepare_train_set_upload" in r[1] and "x_train_info" in r[2] for r in recorded_requests)
+        assert any("/tabpfn/fit" in r[1] and "train_set_upload_id" in r[2] for r in recorded_requests)
+        assert any("prepare_test_set_upload" in r[1] and "fitted_train_set_id" in r[2] for r in recorded_requests)
+        assert any("/tabpfn/predict" in r[1] and "predict_params" in r[2].get("task_config", {}) for r in recorded_requests)
+

@@ -185,99 +185,42 @@ def _compute_baselines(
         return baseline_metrics, baseline_preds
 
 
-def _fit_and_predict_tabpfn(
+async def _fit_and_predict_tabpfn(
     task_type: str,
     X_train: pd.DataFrame,
     y_train: pd.Series,
     X_holdout: pd.DataFrame,
     random_seed: int = 42,
 ) -> dict[str, Any]:
-    """Execute TabPFN model fitting and prediction via hosted API.
-
-    Can be mocked in tests or will import tabpfn_client when available.
-    """
+    """Execute TabPFN model fitting and prediction via hosted Prior Labs REST API."""
     settings = get_settings()
     if settings.TABPFN_TOKEN:
-        if "TABPFN_TOKEN" not in os.environ:
-            os.environ["TABPFN_TOKEN"] = settings.TABPFN_TOKEN
-        try:
-            import tabpfn_client
-            tabpfn_client.set_access_token(settings.TABPFN_TOKEN)
-        except Exception:
-            pass
+        from tabchat.tabpfn import TabPFNClient
+        client = TabPFNClient(token=settings.TABPFN_TOKEN)
+        return await client.fit_and_predict_partitions(
+            task_type=task_type,
+            X_train=X_train,
+            y_train=y_train,
+            X_holdout=X_holdout,
+            random_seed=random_seed,
+        )
 
-    if task_type == "classification":
-        try:
-            from tabpfn_client import TabPFNClassifier
-            clf = TabPFNClassifier(random_state=random_seed)
-            clf.fit(X_train, y_train)
-            preds = clf.predict(X_holdout)
-            probas = clf.predict_proba(X_holdout)
-            row_sums = np.sum(probas, axis=1, keepdims=True)
-            row_sums[row_sums == 0] = 1.0
-            probas = probas / row_sums
-            classes = list(getattr(clf, "classes_", sorted(y_train.unique())))
-            return {
-                "predictions": preds,
-                "probabilities": probas,
-                "classes": classes,
-            }
-        except ImportError:
-            # Fallback mock distribution if tabpfn-client is not installed
-            classes = list(sorted(y_train.unique()))
-            majority = y_train.mode()[0]
-            preds = np.full(len(X_holdout), majority)
-            probas = np.full((len(X_holdout), len(classes)), 1.0 / len(classes))
-            return {
-                "predictions": preds,
-                "probabilities": probas,
-                "classes": classes,
-            }
-    else:
-        try:
-            from tabpfn_client import TabPFNRegressor
-            reg = TabPFNRegressor(random_state=random_seed)
-            reg.fit(X_train, y_train)
-            preds = reg.predict(X_holdout)
-            try:
-                raw_q = reg.predict(X_holdout, output_type="quantiles", quantiles=[0.1, 0.5, 0.9])
-                q_arr = np.asarray(raw_q)
-                if q_arr.ndim == 2 and q_arr.shape[1] == 3:
-                    q10, q50, q90 = q_arr[:, 0], q_arr[:, 1], q_arr[:, 2]
-                elif q_arr.ndim == 2 and q_arr.shape[0] == 3:
-                    q10, q50, q90 = q_arr[0, :], q_arr[1, :], q_arr[2, :]
-                else:
-                    std_val = float(y_train.std()) if len(y_train) > 1 else 1.0
-                    q10 = preds - 1.28 * std_val
-                    q50 = preds
-                    q90 = preds + 1.28 * std_val
-            except Exception:
-                std_val = float(y_train.std()) if len(y_train) > 1 else 1.0
-                q10 = preds - 1.28 * std_val
-                q50 = preds
-                q90 = preds + 1.28 * std_val
+    # If no token is configured, check if we are in demo mode or fakes are allowed
+    use_fakes = getattr(settings, "USE_FAKES", False) or getattr(settings, "DEMO_MODE", False)
+    if use_fakes:
+        from tabchat.tabpfn import FakeTabPFNClient
+        fake_client = FakeTabPFNClient(seed=random_seed)
+        return await fake_client.fit_and_predict_partitions(
+            task_type=task_type,
+            X_train=X_train,
+            y_train=y_train,
+            X_holdout=X_holdout,
+            random_seed=random_seed,
+        )
 
-            return {
-                "predictions": preds,
-                "quantiles": {
-                    "q10": q10,
-                    "q50": q50,
-                    "q90": q90,
-                },
-            }
-        except ImportError:
-            # Fallback mock distribution if tabpfn-client is not installed
-            mean_val = float(y_train.mean())
-            std_val = float(y_train.std()) if len(y_train) > 1 else 1.0
-            preds = np.full(len(X_holdout), mean_val)
-            return {
-                "predictions": preds,
-                "quantiles": {
-                    "q10": preds - 1.28 * std_val,
-                    "q50": preds,
-                    "q90": preds + 1.28 * std_val,
-                },
-            }
+    raise RuntimeError(
+        "TABPFN_TOKEN is required for live TabPFN inference. Please configure TABPFN_TOKEN in your .env file."
+    )
 
 
 def _score_model(
@@ -287,24 +230,60 @@ def _score_model(
 ) -> dict[str, float]:
     """Score model predictions against holdout target."""
     model_preds = np.asarray(api_result["predictions"])
+    y_holdout_arr = y_holdout.to_numpy()
 
     if task_type == "classification":
+        # Coerce prediction types to match holdout if applicable
+        if len(y_holdout_arr) > 0:
+            sample_val = y_holdout_arr[0]
+            if isinstance(sample_val, (int, np.integer)):
+                try:
+                    model_preds = model_preds.astype(int)
+                except Exception:
+                    pass
+            elif isinstance(sample_val, (float, np.floating)):
+                try:
+                    model_preds = model_preds.astype(float)
+                except Exception:
+                    pass
+            elif isinstance(sample_val, str):
+                model_preds = model_preds.astype(str)
+
         if SKLEARN_AVAILABLE:
             acc = float(accuracy_score(y_holdout, model_preds))
         else:
-            acc = float(np.mean(y_holdout.to_numpy() == model_preds))
+            acc = float(np.mean(y_holdout_arr == model_preds))
 
         probas = np.asarray(api_result.get("probabilities", []))
-        classes = api_result.get("classes", list(sorted(y_holdout.unique())))
+        raw_classes = api_result.get("classes", list(sorted(y_holdout.unique())))
+
+        if len(y_holdout_arr) > 0:
+            sample_val = y_holdout_arr[0]
+            if isinstance(sample_val, (int, np.integer)):
+                try:
+                    classes = [int(c) for c in raw_classes]
+                    y_holdout_eval = y_holdout.astype(int)
+                except Exception:
+                    classes = raw_classes
+                    y_holdout_eval = y_holdout
+            elif isinstance(sample_val, str):
+                classes = [str(c) for c in raw_classes]
+                y_holdout_eval = y_holdout.astype(str)
+            else:
+                classes = raw_classes
+                y_holdout_eval = y_holdout
+        else:
+            classes = raw_classes
+            y_holdout_eval = y_holdout
 
         if len(probas) > 0 and len(classes) >= 2:
             if SKLEARN_AVAILABLE:
-                loss = float(log_loss(y_holdout, probas, labels=classes))
+                loss = float(log_loss(y_holdout_eval, probas, labels=classes))
             else:
                 eps = 1e-15
                 clipped = np.clip(probas, eps, 1.0 - eps)
                 one_hot = np.zeros_like(probas)
-                for idx, val in enumerate(y_holdout):
+                for idx, val in enumerate(y_holdout_eval):
                     if val in classes:
                         one_hot[idx, classes.index(val)] = 1.0
                 loss = -float(np.mean(np.sum(one_hot * np.log(clipped), axis=1)))
@@ -365,22 +344,34 @@ async def run_tabpfn_job(
     # Step 3: Compute Baseline Metrics locally
     baseline_metrics, _ = _compute_baselines(spec.task_type, y_train, y_holdout)
 
-    # Step 4: Call TabPFN API via asyncio.to_thread with timeout
+    # Step 4: Call TabPFN API with timeout
     timeout = float(settings.TABPFN_FIT_TIMEOUT_SECONDS)
     caller = api_caller or _fit_and_predict_tabpfn
 
     try:
-        api_result = await asyncio.wait_for(
-            asyncio.to_thread(
-                caller,
-                spec.task_type,
-                X_train,
-                y_train,
-                X_holdout,
-                spec.random_seed,
-            ),
-            timeout=timeout,
-        )
+        if asyncio.iscoroutinefunction(caller):
+            api_result = await asyncio.wait_for(
+                caller(
+                    spec.task_type,
+                    X_train,
+                    y_train,
+                    X_holdout,
+                    spec.random_seed,
+                ),
+                timeout=timeout,
+            )
+        else:
+            api_result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    caller,
+                    spec.task_type,
+                    X_train,
+                    y_train,
+                    X_holdout,
+                    spec.random_seed,
+                ),
+                timeout=timeout,
+            )
     except asyncio.TimeoutError:
         raise TimeoutError(f"TabPFN API execution timed out after {timeout} seconds.")
 
@@ -416,9 +407,12 @@ async def run_tabpfn_job(
                 "q90": round(float(q_dict["q90"][i]), 4),
             }
         elif spec.task_type == "classification" and "probabilities" in api_result:
-            sample_item["probabilities"] = [
+            probs_list = [
                 round(float(p), 4) for p in api_result["probabilities"][i]
             ]
+            sample_item["probabilities"] = probs_list
+            if probs_list:
+                sample_item["probability"] = round(float(max(probs_list)), 4)
 
         sample_predictions.append(sample_item)
 

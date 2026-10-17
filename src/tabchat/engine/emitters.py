@@ -133,6 +133,21 @@ def emit_classification_blocks(
             },
         })
 
+    # Optional Log Loss metric if present
+    if "log_loss" in model_metrics:
+        loss_val = round(float(model_metrics["log_loss"]), 3)
+        base_loss = round(float(base_metrics.get("log_loss", 0.693)), 3)
+        delta_loss = round(float(delta_metrics.get("log_loss", loss_val - base_loss)), 3)
+        blocks.append({
+            "type": "metric",
+            "name": "Log Loss",
+            "value": loss_val,
+            "baseline_value": base_loss,
+            "delta": delta_loss,
+            "unit": "loss",
+            "description": "Cross-entropy loss on holdout test set vs naive prior baseline (lower is better).",
+        })
+
     # 2. Calibration Chart
     bins = [0.1, 0.3, 0.5, 0.7, 0.9]
     obs_freqs = [0.08, 0.29, 0.52, 0.68, 0.91]
@@ -155,11 +170,16 @@ def emit_classification_blocks(
     pred_rows: list[list[Any]] = []
     if samples:
         for idx, item in enumerate(samples[:10]):
+            prob_val = 0.85
+            if "probabilities" in item and item["probabilities"]:
+                prob_val = max(item["probabilities"])
+            elif "probability" in item:
+                prob_val = item["probability"]
             pred_rows.append([
                 idx + 1,
                 str(item.get("actual", "")),
                 str(item.get("predicted", "")),
-                round(float(item.get("probability", 0.85)), 3),
+                round(float(prob_val), 3),
             ])
     else:
         pred_rows = [

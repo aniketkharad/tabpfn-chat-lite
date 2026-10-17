@@ -44,6 +44,11 @@ def _collect_numeric_values(data: Any) -> set[float]:
                     for uk in ("lower", "upper"):
                         if uk in obj["uncertainty"] and isinstance(obj["uncertainty"][uk], (int, float)):
                             numbers.add(float(obj["uncertainty"][uk]))
+                    if "confidence_level" in obj["uncertainty"] and isinstance(obj["uncertainty"]["confidence_level"], (int, float)):
+                        conf = float(obj["uncertainty"]["confidence_level"])
+                        numbers.add(conf)
+                        numbers.add(round(conf * 100.0, 1))
+                        numbers.add(round(conf * 100.0, 0))
                 return
             elif b_type == "chart":
                 for arr in obj.get("data", {}).values():
@@ -59,8 +64,23 @@ def _collect_numeric_values(data: Any) -> set[float]:
                         if isinstance(cell, float):
                             numbers.add(cell)
                 return
+
+            if "holdout_size" in obj and isinstance(obj["holdout_size"], (int, float)):
+                h_size = float(obj["holdout_size"])
+                numbers.add(h_size)
+                if h_size > 0:
+                    numbers.add(round(1.0 / h_size * 100.0, 2))
+                    numbers.add(round(1.0 / h_size * 100.0, 1))
+                if "train_size" in obj and isinstance(obj["train_size"], (int, float)):
+                    t_size = float(obj["train_size"])
+                    numbers.add(t_size)
+                    total_sz = t_size + h_size
+                    if total_sz > 0:
+                        numbers.add(round(h_size / total_sz * 100.0, 1))
+                        numbers.add(round(h_size / total_sz * 100.0, 0))
+
             for k, v in obj.items():
-                if k in ("table", "rows", "sample_predictions"):
+                if k in ("table", "rows"):
                     continue
                 _extract_from_obj(v)
         elif isinstance(obj, (list, tuple)):
@@ -86,9 +106,13 @@ def generate_template_narration(capability: str, blocks: list[dict[str, Any]]) -
             base = acc_b.get("baseline_value", "baseline")
             delta = acc_b.get("delta")
             delta_str = f"+{delta}" if isinstance(delta, (int, float)) and delta > 0 else f"{delta}"
+            if isinstance(delta, (int, float)) and delta <= 0:
+                comparison = f"matching the naive {base} baseline (lift: {delta_str})"
+            else:
+                comparison = f"outperforming the naive {base} baseline by {delta_str}"
             return (
                 f"TabPFN classification achieved {val} {acc_b.get('name', 'accuracy')} on holdout evaluation, "
-                f"outperforming the naive {base} baseline by {delta_str}. "
+                f"{comparison}. "
                 "Calibration reliability curves and holdout predictions have been computed deterministically."
             )
         return "TabPFN classification analysis completed. Metrics and calibration curves are detailed in the blocks."
@@ -264,8 +288,8 @@ async def narrate_results(
         system_prompt=system_prompt,
     )
 
-    # 4. Hallucination Guard: Verify against blocks (or results)
-    check_source = blocks if blocks else results
+    # 4. Hallucination Guard: Verify against blocks and execution results
+    check_source = [blocks, results] if blocks else results
     phantoms = verify_hallucination_guard(narration, check_source)
 
     if phantoms:
