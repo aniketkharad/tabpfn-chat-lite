@@ -37,3 +37,6 @@ docs/
 **/*.md
 !/README.md
 !src/**/*.md
+
+# Local-only replay audit dumps (contain local filesystem paths)
+**/replay_audit.txt

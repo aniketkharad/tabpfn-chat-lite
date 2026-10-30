@@ -19,6 +19,10 @@ size-check: frontend-build
 screenshots: frontend-build
 	@uv run python scripts/render_capability_preview.py
 
+# Offline drills never call upstream APIs; Settings just needs the variables to exist.
+security-test load-test key-drills: export GEMINI_API_KEY ?= test-placeholder-not-a-real-key
+security-test load-test key-drills: export TABPFN_TOKEN ?= test-placeholder-not-a-real-token
+
 secret-scan:
 	@uv run python scripts/secret-scan.py
 
